@@ -1,84 +1,132 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthService, User, Restaurant } from '@/lib/auth';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { AuthService, User, Restaurant } from "@/lib/auth";
+
+/* =========================
+   TIPOS
+========================= */
+interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  type: "user" | "business";
+  restaurantData?: {
+    name: string;
+    description: string;
+    address: string;
+    phone: string;
+    plan: "free" | "pro";
+  };
+}
 
 interface AuthContextType {
   user: User | null;
   restaurant: Restaurant | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+/* =========================
+   CONTEXTO
+========================= */
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+/* =========================
+   PROVIDER
+========================= */
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Verificar se há usuário logado no localStorage
-    const currentUser = AuthService.getCurrentUser();
-    const currentRestaurant = AuthService.getCurrentRestaurant();
-    
-    setUser(currentUser);
-    setRestaurant(currentRestaurant);
-    setIsLoading(false);
+    try {
+      const currentUser = AuthService.getCurrentUser();
+      const currentRestaurant = AuthService.getCurrentRestaurant();
+
+      setUser(currentUser);
+      setRestaurant(currentRestaurant);
+    } catch (err) {
+      console.error("[RTA] Erro ao carregar sessão:", err);
+      setUser(null);
+      setRestaurant(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const login = async (email: string, password: string) => {
+  /* ===== LOGIN ===== */
+  const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
       const result = await AuthService.login(email, password);
       setUser(result.user);
-      setRestaurant(result.restaurant || null);
-    } catch (error) {
-      throw error;
+      setRestaurant(result.restaurant ?? null);
+    } catch (err) {
+      throw err instanceof Error
+        ? err
+        : new Error("Erro ao realizar login");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (userData: any) => {
+  /* ===== REGISTER ===== */
+  const register = async (userData: RegisterData): Promise<void> => {
     setIsLoading(true);
     try {
       const result = await AuthService.register(userData);
       setUser(result.user);
-      setRestaurant(result.restaurant || null);
-    } catch (error) {
-      throw error;
+      setRestaurant(result.restaurant ?? null);
+    } catch (err) {
+      throw err instanceof Error
+        ? err
+        : new Error("Erro ao realizar cadastro");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  /* ===== LOGOUT ===== */
+  const logout = (): void => {
     AuthService.logout();
     setUser(null);
     setRestaurant(null);
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      restaurant,
-      login,
-      register,
-      logout,
-      isLoading
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        restaurant,
+        login,
+        register,
+        logout,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+/* =========================
+   HOOK
+========================= */
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de AuthProvider");
   }
   return context;
 }
+

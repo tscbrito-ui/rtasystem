@@ -94,7 +94,7 @@ export default function HomePage() {
                 <span className="text-white font-bold text-xl">Z</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">ZAAP</h1>
+                <h1 className="text-2xl font-bold text-gray-900">RTA</h1>
                 <p className="text-sm text-gray-600">Gestão de Restaurantes</p>
               </div>
             </div>
@@ -262,7 +262,7 @@ export default function HomePage() {
               Pronto para revolucionar seu restaurante?
             </h3>
             <p className="text-xl mb-8 opacity-90">
-              Junte-se a milhares de restaurantes que já transformaram seu negócio com o ZAAP
+              Junte-se a milhares de restaurantes que já transformaram seu negócio com o RTA
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100 text-lg px-8 py-3" asChild>
@@ -285,7 +285,7 @@ export default function HomePage() {
                 <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold">Z</span>
                 </div>
-                <span className="text-xl font-bold">ZAAP</span>
+                <span className="text-xl font-bold">RTA</span>
               </div>
               <p className="text-gray-400">
                 Sistema completo de gestão para restaurantes modernos.
@@ -320,7 +320,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 ZAAP. Todos os direitos reservados.</p>
+            <p>&copy; 2024 RTA. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

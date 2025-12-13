@@ -3,46 +3,68 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, Building2, User, Mail, Lock, Phone, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  MapPin,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function AuthPage() {
+  const router = useRouter();
+
+  const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("login");
   const [userType, setUserType] = useState<"user" | "business">("business");
   const [selectedPlan, setSelectedPlan] = useState<"free" | "pro">("free");
-  const [isClient, setIsClient] = useState(false);
-  
-  const router = useRouter();
 
   useEffect(() => {
-    setIsClient(true);
+    setIsClient(true); // Evita qualquer hidratação incorreta
   }, []);
 
-  // Só renderizar após hidratação no cliente
+  // Evita SSR — necessário para usar useAuth()
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">Z</span>
-          </div>
-          <p className="text-gray-600">Carregando...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Carregando...</p>
       </div>
     );
   }
 
+  // Agora é seguro chamar
   const { login, register } = useAuth();
 
+  // --- LOGIN ---
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -55,304 +77,218 @@ export default function AuthPage() {
     try {
       await login(email, password);
       router.push("/dashboard");
-    } catch (err) {
+    } catch {
       setError("Email ou senha incorretos");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // --- REGISTER ---
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
 
     const userData: any = {
-      name,
-      email,
-      password,
-      type: userType
+      name: formData.get("name"),
+      email: formData.get("email"),
+      password: formData.get("password"),
+      type: userType,
     };
 
     if (userType === "business") {
       userData.restaurantData = {
-        name: formData.get("restaurantName") as string,
-        description: formData.get("restaurantDescription") as string,
-        address: formData.get("restaurantAddress") as string,
-        phone: formData.get("restaurantPhone") as string,
-        plan: selectedPlan
+        name: formData.get("restaurantName"),
+        description: formData.get("restaurantDescription"),
+        address: formData.get("restaurantAddress"),
+        phone: formData.get("restaurantPhone"),
+        plan: selectedPlan,
       };
     }
 
     try {
       await register(userData);
-      router.push(userType === "business" ? "/dashboard" : "/");
-    } catch (err) {
+      router.push("/dashboard");
+    } catch {
       setError("Erro ao criar conta. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // -------------------------
+  // RETORNO DO COMPONENTE
+  // -------------------------
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center text-gray-600 hover:text-orange-600 mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center text-gray-600 hover:text-orange-600 mb-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao início
           </Link>
+
           <div className="flex items-center justify-center space-x-2 mb-4">
             <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">Z</span>
+              <span className="text-white font-bold text-xl">RTA</span>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">ZAAP</h1>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900">RTA</h1>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="login">Entrar</TabsTrigger>
             <TabsTrigger value="register">Criar Conta</TabsTrigger>
           </TabsList>
 
-          {/* Login Tab */}
+          {/* --- LOGIN --- */}
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle>Entrar na sua conta</CardTitle>
-                <CardDescription>
-                  Acesse seu painel de controle do ZAAP
-                </CardDescription>
+                <CardTitle>Entrar</CardTitle>
+                <CardDescription>Acesse seu painel RTA</CardDescription>
               </CardHeader>
+
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label>Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        className="pl-10"
-                        required
-                      />
+                      <Input name="email" type="email" className="pl-10" required />
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
+                    <Label>Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        placeholder="Sua senha"
-                        className="pl-10"
-                        required
-                      />
+                      <Input name="password" type="password" className="pl-10" required />
                     </div>
                   </div>
-                  
+
                   {error && (
-                    <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                    <div className="text-red-600 bg-red-50 p-3 rounded-md text-sm">
                       {error}
                     </div>
                   )}
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                  <Button
                     disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500"
                   >
                     {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                 </form>
-
-                <div className="mt-4 text-center text-sm text-gray-600">
-                  <p>Contas de demonstração:</p>
-                  <p><strong>Restaurante:</strong> joao@restaurante.com</p>
-                  <p><strong>Cliente:</strong> maria@cliente.com</p>
-                  <p><strong>Senha:</strong> qualquer senha</p>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Register Tab */}
+          {/* --- REGISTER --- */}
           <TabsContent value="register">
             <Card>
               <CardHeader>
-                <CardTitle>Criar nova conta</CardTitle>
-                <CardDescription>
-                  Comece a usar o ZAAP gratuitamente
-                </CardDescription>
+                <CardTitle>Criar conta</CardTitle>
               </CardHeader>
+
               <CardContent>
                 <form onSubmit={handleRegister} className="space-y-4">
-                  {/* Tipo de usuário */}
-                  <div className="space-y-2">
-                    <Label>Tipo de conta</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant={userType === "business" ? "default" : "outline"}
-                        onClick={() => setUserType("business")}
-                        className="flex items-center justify-center space-x-2"
-                      >
-                        <Building2 className="h-4 w-4" />
-                        <span>Restaurante</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={userType === "user" ? "default" : "outline"}
-                        onClick={() => setUserType("user")}
-                        className="flex items-center justify-center space-x-2"
-                      >
-                        <User className="h-4 w-4" />
-                        <span>Cliente</span>
-                      </Button>
-                    </div>
+                  {/* Tipo de conta */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      variant={userType === "business" ? "default" : "outline"}
+                      onClick={() => setUserType("business")}
+                    >
+                      <Building2 className="h-4 w-4 mr-2" /> Restaurante
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant={userType === "user" ? "default" : "outline"}
+                      onClick={() => setUserType("user")}
+                    >
+                      <User className="h-4 w-4 mr-2" /> Cliente
+                    </Button>
                   </div>
 
-                  {/* Dados pessoais */}
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome completo</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="name"
-                        name="name"
-                        placeholder="Seu nome completo"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                  {/* Nome */}
+                  <div>
+                    <Label>Nome completo</Label>
+                    <Input name="name" required />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                  {/* Email */}
+                  <div>
+                    <Label>Email</Label>
+                    <Input name="email" type="email" required />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        placeholder="Crie uma senha"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
+                  {/* Senha */}
+                  <div>
+                    <Label>Senha</Label>
+                    <Input name="password" type="password" required />
                   </div>
 
-                  {/* Dados do restaurante (apenas para business) */}
+                  {/* Dados do restaurante */}
                   {userType === "business" && (
                     <>
-                      <div className="border-t pt-4">
-                        <h3 className="font-medium text-gray-900 mb-3">Dados do Restaurante</h3>
-                        
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="restaurantName">Nome do restaurante</Label>
-                            <Input
-                              id="restaurantName"
-                              name="restaurantName"
-                              placeholder="Nome do seu restaurante"
-                              required
-                            />
-                          </div>
+                      <h3 className="font-medium pt-4">Dados do restaurante</h3>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="restaurantDescription">Descrição</Label>
-                            <Textarea
-                              id="restaurantDescription"
-                              name="restaurantDescription"
-                              placeholder="Descreva seu restaurante"
-                              rows={2}
-                              required
-                            />
-                          </div>
+                      <Input
+                        name="restaurantName"
+                        placeholder="Nome do restaurante"
+                        required
+                      />
+                      <Textarea
+                        name="restaurantDescription"
+                        placeholder="Descrição"
+                        required
+                      />
+                      <Input
+                        name="restaurantAddress"
+                        placeholder="Endereço"
+                        required
+                      />
+                      <Input
+                        name="restaurantPhone"
+                        placeholder="Telefone"
+                        required
+                      />
 
-                          <div className="space-y-2">
-                            <Label htmlFor="restaurantAddress">Endereço</Label>
-                            <div className="relative">
-                              <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                              <Input
-                                id="restaurantAddress"
-                                name="restaurantAddress"
-                                placeholder="Endereço completo"
-                                className="pl-10"
-                                required
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="restaurantPhone">Telefone</Label>
-                            <div className="relative">
-                              <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                              <Input
-                                id="restaurantPhone"
-                                name="restaurantPhone"
-                                placeholder="(11) 99999-9999"
-                                className="pl-10"
-                                required
-                              />
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Plano</Label>
-                            <Select value={selectedPlan} onValueChange={(value: "free" | "pro") => setSelectedPlan(value)}>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="free">Grátis - R$ 0/mês</SelectItem>
-                                <SelectItem value="pro">Pró - R$ 49/mês</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
+                      <Select
+                        value={selectedPlan}
+                        onValueChange={(v: "free" | "pro") => setSelectedPlan(v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Escolha um plano" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Grátis</SelectItem>
+                          <SelectItem value="pro">Pró - R$49/mês</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </>
                   )}
 
                   {error && (
-                    <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                    <div className="text-red-600 bg-red-50 p-3 rounded-md text-sm">
                       {error}
                     </div>
                   )}
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                  <Button
                     disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500"
                   >
                     {isLoading ? "Criando conta..." : "Criar conta"}
                   </Button>

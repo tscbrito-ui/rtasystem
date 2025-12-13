@@ -1,4 +1,4 @@
-# ZAAP - Sistema de Gestão de Restaurantes - TODO
+# RTA - Sistema de Gestão de Restaurantes - TODO
 
 ## STAGE 1: Layout e Estrutura Base ✅
 - [x] Criar layout.tsx principal

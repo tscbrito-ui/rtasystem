@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ZAAP - Sistema de Gestão de Restaurantes",
+  title: "RTA - Sistema de Gestão de Restaurantes",
   description: "Plataforma completa para gestão de restaurantes com cardápio online, pedidos e integração WhatsApp Business",
   keywords: "restaurante, cardápio online, pedidos, gestão, whatsapp business, qr code",
 };
