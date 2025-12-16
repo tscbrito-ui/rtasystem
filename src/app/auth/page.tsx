@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,34 +29,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/contexts/AuthContext";
+
 import {
   ArrowLeft,
   Building2,
   User,
   Mail,
   Lock,
-  Phone,
-  MapPin,
 } from "lucide-react";
-import Link from "next/link";
+
+/* =========================
+   TIPOS
+========================= */
+interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+  type: "user" | "business";
+  restaurantData?: {
+    name: string;
+    description: string;
+    address: string;
+    phone: string;
+    plan: "free" | "pro";
+  };
+}
 
 export default function AuthPage() {
   const router = useRouter();
 
-  const [isClient, setIsClient] = useState(false);
+  /* ✅ HOOKS SEMPRE NO TOPO */
+  const { login, register } = useAuth();
+
+  const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("login");
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [userType, setUserType] = useState<"user" | "business">("business");
   const [selectedPlan, setSelectedPlan] = useState<"free" | "pro">("free");
 
+  /* ✅ evita problemas de hidratação */
   useEffect(() => {
-    setIsClient(true); // Evita qualquer hidratação incorreta
+    setMounted(true);
   }, []);
 
-  // Evita SSR — necessário para usar useAuth()
-  if (!isClient) {
+  if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Carregando...</p>
@@ -61,21 +81,21 @@ export default function AuthPage() {
     );
   }
 
-  // Agora é seguro chamar
-  const { login, register } = useAuth();
-
-  // --- LOGIN ---
+  /* =========================
+     LOGIN
+  ========================= */
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
 
     try {
-      await login(email, password);
+      await login(
+        String(formData.get("email")),
+        String(formData.get("password"))
+      );
       router.push("/dashboard");
     } catch {
       setError("Email ou senha incorretos");
@@ -84,27 +104,29 @@ export default function AuthPage() {
     }
   };
 
-  // --- REGISTER ---
+  /* =========================
+     REGISTER
+  ========================= */
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
 
-    const userData: any = {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      password: formData.get("password"),
+    const userData: RegisterData = {
+      name: String(formData.get("name")),
+      email: String(formData.get("email")),
+      password: String(formData.get("password")),
       type: userType,
     };
 
     if (userType === "business") {
       userData.restaurantData = {
-        name: formData.get("restaurantName"),
-        description: formData.get("restaurantDescription"),
-        address: formData.get("restaurantAddress"),
-        phone: formData.get("restaurantPhone"),
+        name: String(formData.get("restaurantName")),
+        description: String(formData.get("restaurantDescription")),
+        address: String(formData.get("restaurantAddress")),
+        phone: String(formData.get("restaurantPhone")),
         plan: selectedPlan,
       };
     }
@@ -119,14 +141,12 @@ export default function AuthPage() {
     }
   };
 
-  // -------------------------
-  // RETORNO DO COMPONENTE
-  // -------------------------
-
+  /* =========================
+     UI
+  ========================= */
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <Link
             href="/"
@@ -136,31 +156,30 @@ export default function AuthPage() {
             Voltar ao início
           </Link>
 
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">RTA</span>
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center text-white font-bold">
+              RTA
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">RTA</h1>
+            <h1 className="text-2xl font-bold">RTA</h1>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
           <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="login">Entrar</TabsTrigger>
             <TabsTrigger value="register">Criar Conta</TabsTrigger>
           </TabsList>
 
-          {/* --- LOGIN --- */}
+          {/* LOGIN */}
           <TabsContent value="login">
             <Card>
               <CardHeader>
                 <CardTitle>Entrar</CardTitle>
                 <CardDescription>Acesse seu painel RTA</CardDescription>
               </CardHeader>
-
               <CardContent>
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
+                  <div>
                     <Label>Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -168,7 +187,7 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div>
                     <Label>Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -177,15 +196,12 @@ export default function AuthPage() {
                   </div>
 
                   {error && (
-                    <div className="text-red-600 bg-red-50 p-3 rounded-md text-sm">
+                    <div className="text-red-600 bg-red-50 p-3 rounded text-sm">
                       {error}
                     </div>
                   )}
 
-                  <Button
-                    disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-orange-500 to-red-500"
-                  >
+                  <Button disabled={isLoading} className="w-full">
                     {isLoading ? "Entrando..." : "Entrar"}
                   </Button>
                 </form>
@@ -193,23 +209,22 @@ export default function AuthPage() {
             </Card>
           </TabsContent>
 
-          {/* --- REGISTER --- */}
+          {/* REGISTER */}
           <TabsContent value="register">
             <Card>
               <CardHeader>
-                <CardTitle>Criar conta</CardTitle>
+                <CardTitle>Criar Conta</CardTitle>
               </CardHeader>
-
               <CardContent>
                 <form onSubmit={handleRegister} className="space-y-4">
-                  {/* Tipo de conta */}
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant={userType === "business" ? "default" : "outline"}
                       onClick={() => setUserType("business")}
                     >
-                      <Building2 className="h-4 w-4 mr-2" /> Restaurante
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Restaurante
                     </Button>
 
                     <Button
@@ -217,60 +232,25 @@ export default function AuthPage() {
                       variant={userType === "user" ? "default" : "outline"}
                       onClick={() => setUserType("user")}
                     >
-                      <User className="h-4 w-4 mr-2" /> Cliente
+                      <User className="h-4 w-4 mr-2" />
+                      Cliente
                     </Button>
                   </div>
 
-                  {/* Nome */}
-                  <div>
-                    <Label>Nome completo</Label>
-                    <Input name="name" required />
-                  </div>
+                  <Input name="name" placeholder="Nome completo" required />
+                  <Input name="email" type="email" placeholder="Email" required />
+                  <Input name="password" type="password" placeholder="Senha" required />
 
-                  {/* Email */}
-                  <div>
-                    <Label>Email</Label>
-                    <Input name="email" type="email" required />
-                  </div>
-
-                  {/* Senha */}
-                  <div>
-                    <Label>Senha</Label>
-                    <Input name="password" type="password" required />
-                  </div>
-
-                  {/* Dados do restaurante */}
                   {userType === "business" && (
                     <>
-                      <h3 className="font-medium pt-4">Dados do restaurante</h3>
+                      <Input name="restaurantName" placeholder="Nome do restaurante" required />
+                      <Textarea name="restaurantDescription" placeholder="Descrição" required />
+                      <Input name="restaurantAddress" placeholder="Endereço" required />
+                      <Input name="restaurantPhone" placeholder="Telefone" required />
 
-                      <Input
-                        name="restaurantName"
-                        placeholder="Nome do restaurante"
-                        required
-                      />
-                      <Textarea
-                        name="restaurantDescription"
-                        placeholder="Descrição"
-                        required
-                      />
-                      <Input
-                        name="restaurantAddress"
-                        placeholder="Endereço"
-                        required
-                      />
-                      <Input
-                        name="restaurantPhone"
-                        placeholder="Telefone"
-                        required
-                      />
-
-                      <Select
-                        value={selectedPlan}
-                        onValueChange={(v: "free" | "pro") => setSelectedPlan(v)}
-                      >
+                      <Select value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as "free" | "pro")}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Escolha um plano" />
+                          <SelectValue placeholder="Plano" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="free">Grátis</SelectItem>
@@ -281,15 +261,12 @@ export default function AuthPage() {
                   )}
 
                   {error && (
-                    <div className="text-red-600 bg-red-50 p-3 rounded-md text-sm">
+                    <div className="text-red-600 bg-red-50 p-3 rounded text-sm">
                       {error}
                     </div>
                   )}
 
-                  <Button
-                    disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-orange-500 to-red-500"
-                  >
+                  <Button disabled={isLoading} className="w-full">
                     {isLoading ? "Criando conta..." : "Criar conta"}
                   </Button>
                 </form>
@@ -301,3 +278,4 @@ export default function AuthPage() {
     </div>
   );
 }
+
