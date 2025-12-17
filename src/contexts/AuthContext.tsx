@@ -1,6 +1,6 @@
 "use client";
 
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -38,7 +38,7 @@ interface AuthContextType {
 /* =========================
    CONTEXTO
 ========================= */
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /* =========================
    PROVIDER
@@ -46,17 +46,20 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
 
+  /* ✅ RODA APENAS NO BROWSER */
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     try {
       const currentUser = AuthService.getCurrentUser();
       const currentRestaurant = AuthService.getCurrentRestaurant();
 
       setUser(currentUser);
       setRestaurant(currentRestaurant);
-    } catch (err) {
-      console.error("[RTA] Erro ao carregar sessão:", err);
+    } catch (error) {
+      console.error("[RTA] Falha ao restaurar sessão:", error);
       setUser(null);
       setRestaurant(null);
     } finally {
@@ -65,43 +68,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /* ===== LOGIN ===== */
-  const login = async (email: string, password: string): Promise<void> => {
+  async function login(email: string, password: string) {
     setIsLoading(true);
     try {
       const result = await AuthService.login(email, password);
       setUser(result.user);
       setRestaurant(result.restaurant ?? null);
-    } catch (err) {
-      throw err instanceof Error
-        ? err
-        : new Error("Erro ao realizar login");
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   /* ===== REGISTER ===== */
-  const register = async (userData: RegisterData): Promise<void> => {
+  async function register(userData: RegisterData) {
     setIsLoading(true);
     try {
       const result = await AuthService.register(userData);
       setUser(result.user);
       setRestaurant(result.restaurant ?? null);
-    } catch (err) {
-      throw err instanceof Error
-        ? err
-        : new Error("Erro ao realizar cadastro");
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   /* ===== LOGOUT ===== */
-  const logout = (): void => {
-    AuthService.logout();
+  function logout() {
+    if (typeof window !== "undefined") {
+      AuthService.logout();
+    }
     setUser(null);
     setRestaurant(null);
-  };
+  }
 
   return (
     <AuthContext.Provider
@@ -125,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth deve ser usado dentro de AuthProvider");
+    throw new Error("useAuth deve ser usado dentro de <AuthProvider>");
   }
   return context;
 }
