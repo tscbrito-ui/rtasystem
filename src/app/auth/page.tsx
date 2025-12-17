@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -57,34 +57,18 @@ interface RegisterData {
 
 export default function AuthPage() {
   const router = useRouter();
-
-  /* ✅ HOOKS SEMPRE NO TOPO */
   const { login, register } = useAuth();
 
-  const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [userType, setUserType] = useState<"user" | "business">("business");
   const [selectedPlan, setSelectedPlan] = useState<"free" | "pro">("free");
 
-  /* ✅ evita problemas de hidratação */
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Carregando...</p>
-      </div>
-    );
-  }
-
   /* =========================
      LOGIN
   ========================= */
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -102,12 +86,12 @@ export default function AuthPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   /* =========================
      REGISTER
   ========================= */
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -139,11 +123,8 @@ export default function AuthPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
-  /* =========================
-     UI
-  ========================= */
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -164,7 +145,10 @@ export default function AuthPage() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "login" | "register")}
+        >
           <TabsList className="grid grid-cols-2 w-full">
             <TabsTrigger value="login">Entrar</TabsTrigger>
             <TabsTrigger value="register">Criar Conta</TabsTrigger>
@@ -248,7 +232,10 @@ export default function AuthPage() {
                       <Input name="restaurantAddress" placeholder="Endereço" required />
                       <Input name="restaurantPhone" placeholder="Telefone" required />
 
-                      <Select value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as "free" | "pro")}>
+                      <Select
+                        value={selectedPlan}
+                        onValueChange={(v) => setSelectedPlan(v as "free" | "pro")}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Plano" />
                         </SelectTrigger>
@@ -278,5 +265,3 @@ export default function AuthPage() {
     </div>
   );
 }
-
-
